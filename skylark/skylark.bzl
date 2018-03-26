@@ -279,11 +279,12 @@ def skydoc_repositories():
       actual = "@six_archive//:six",
   )
 
-  native.new_git_repository(
+  native.new_http_archive(
       name = "gflags_repo",
-      remote = "https://github.com/google/python-gflags",
-      tag = "python-gflags-2.0",
+      url = "https://github.com/google/python-gflags/archive/python-gflags-2.0.zip",
+      sha256 = "344990e63d49b9b7a829aec37d5981d558fea12879f673ee7d25d2a109eb30ce",
       build_file_content = GFLAGS_BUILD_FILE,
+      strip_prefix = "python-gflags-python-gflags-2.0",
   )
 
   native.bind(
