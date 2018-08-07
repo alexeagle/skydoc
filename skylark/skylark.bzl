@@ -31,6 +31,7 @@ def _skydoc(ctx):
 def _skylark_doc_impl(ctx):
     """Implementation of the skylark_doc rule."""
     skylark_doc_zip = ctx.outputs.skylark_doc_zip
+    skylark_doc_dir = ctx.actions.declare_directory(ctx.label.name)
     direct = []
     transitive = []
     skydoc = _skydoc(ctx)
@@ -47,7 +48,6 @@ def _skylark_doc_impl(ctx):
     sources = [source.path for source in direct]
     flags = [
         "--format=%s" % ctx.attr.format,
-        "--output_file=%s" % ctx.outputs.skylark_doc_zip.path,
     ]
     if ctx.attr.strip_prefix:
         flags += ["--strip_prefix=%s" % ctx.attr.strip_prefix]
@@ -59,17 +59,37 @@ def _skylark_doc_impl(ctx):
         flags += ["--link_ext=%s" % ctx.attr.link_ext]
     if ctx.attr.site_root:
         flags += ["--site_root=%s" % ctx.attr.site_root]
+    # This action is run if the .zip output is requested
     ctx.actions.run(
         inputs = inputs,
         tools = [skydoc],
         executable = skydoc,
-        arguments = flags + sources,
+        arguments = ["--output_file=%s" % ctx.outputs.skylark_doc_zip.path] + flags + sources,
         outputs = [skylark_doc_zip],
         mnemonic = "Skydoc",
         use_default_shell_env = True,
-        progress_message = ("Generating Skylark doc for %s (%d files)" %
+        progress_message = ("Generating Skylark documentation zip for %s (%d files)" %
                             (ctx.label.name, len(sources))),
     )
+
+    # This action is run if the default output is requested
+    ctx.actions.run(
+        inputs = inputs,
+        tools = [skydoc],
+        executable = skydoc,
+        arguments = ["--nozip", "--output_dir=%s" % skylark_doc_dir.path] + flags + sources,
+        outputs = [skylark_doc_dir],
+        mnemonic = "Skydoc",
+        use_default_shell_env = True,
+        progress_message = ("Generating Skylark documentation dir for %s (%d files)" %
+                            (ctx.label.name, len(sources))),
+    )
+
+    result_files = depset([skylark_doc_dir])
+    return [DefaultInfo(
+        files = result_files,
+        runfiles = ctx.runfiles(transitive_files = result_files),
+    )]
 
 skylark_doc = rule(
     _skylark_doc_impl,
@@ -140,6 +160,9 @@ Args:
 
 Outputs:
   skylark_doc_zip: A zip file containing the generated documentation.
+                   Request this output for a target named `my_label`
+                   with the label `:my_label-skydoc.zip`
+  default output: A directory containing the generated documentation.
 
 Example:
   Suppose you have a project containing Skylark rules you want to document:
