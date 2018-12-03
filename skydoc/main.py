@@ -237,12 +237,13 @@ def main(argv):
       help='The output zip archive file to write if --zip=true.')
   parser.add_option('--format', default='markdown',
       help='The output format. Possible values are markdown and html')
-  parser.add_option('--zip', action='store_true', default=True,
+  parser.add_option('--zip', action='store_true', dest='zip',
       help='Whether to generate a ZIP arhive containing the output files. If '
            '--zip is true, then skydoc will generate a zip file, skydoc.zip by '
            'default or as specified by --output_file. If --zip is false, then '
            'skydoc will generate documentation, either in Markdown or HTML as '
            'specifed by --format, in the current directory or --output_dir if set.')
+  parser.add_option('--nozip', action='store_false', dest='zip')
   parser.add_option('--strip_prefix', default='',
       help='The directory prefix to strip from all generated docs, which are '
            'generated in subdirectories that match the package structure of the '
